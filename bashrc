@@ -3,6 +3,7 @@
 # Added by Jijo
 HISTSIZE=20000
 HISTFILESIZE=20000
+export XDG_DATA_HOME=${XDG_DATA_HOME:="$HOME/.local/share"}
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then

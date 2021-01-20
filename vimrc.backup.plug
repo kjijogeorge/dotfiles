@@ -1,39 +1,47 @@
 set nocompatible
-let g:mapleader = "\<Space>"
+filetype off
 
-if empty(glob('~/.vim/autoload/plug.vim'))
-   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
-    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-   autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
-endif
-
+set rtp +=~/.vim
 call plug#begin('~/.vim/plugged')
 
-  "Plug 'Valloric/YouCompleteMe'
+Plug 'Valloric/YouCompleteMe'
 
-  "Plug 'davidhalter/jedi-vim'
-  "Plug 'SirVer/ultisnips'
-  "Plug 'honza/vim-snippets'
+"Plug 'davidhalter/jedi-vim'
+"Plug 'SirVer/ultisnips'
+"Plug 'honza/vim-snippets'
 
-  Plug 'scrooloose/nerdtree'
-  Plug 'preservim/nerdcommenter'
-  Plug 'bling/vim-airline'
-  "Plug 'kien/ctrlp.vim'
-  Plug 'flazz/vim-colorschemes'
-  "Plug 'dense-analysis/ale' " requires vim8
+Plug 'scrooloose/nerdtree'
+Plug 'preservim/nerdcommenter'
+Plug 'bling/vim-airline'
+"Plug 'kien/ctrlp.vim'
+Plug 'flazz/vim-colorschemes'
+"Plug 'dense-analysis/ale' " requires vim8
 
-  set rtp+=/home/georgek/.vim/fzf
-  Plug 'junegunn/fzf', { 'dir': '~/.vim/fzf', 'do': './install -all' }
-  Plug 'junegunn/fzf.vim'
+set rtp+=/home/georgek/.vim/fzf
+Plug 'junegunn/fzf'
+Plug 'junegunn/fzf.vim'
 
-  Plug 'tpope/vim-fugitive'
-  Plug 'Vimjas/vim-python-pep8-indent'
-  "Plug 'vim-syntastic/syntastic'
-  Plug 'Chiel92/vim-autoformat'
-  Plug 'airblade/vim-gitgutter'
+Plug 'tpope/vim-fugitive'
+Plug 'Vimjas/vim-python-pep8-indent'
+"Plug 'vim-syntastic/syntastic'
+Plug 'Chiel92/vim-autoformat'
+Plug 'airblade/vim-gitgutter'
 
 call plug#end()
+
 filetype plugin indent on    " required
+" To ignore plugin indent changes, instead use:
+"filetype plugin on
+"
+" Brief help
+" :PluginList       - lists configured plugins
+" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
+" :PluginSearch foo - searches for foo; append `!` to refresh local cache
+" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+"
+" see :h vundle for more details or wiki for FAQ
+" Put your non-Plugin stuff after this line
+
 
 """"""""""""""""""""BASE CONFIG"""""""""""""""""""""""
 "Status bar configuration
@@ -122,9 +130,6 @@ set foldcolumn=2
 set cursorline
 " set cursorcolumn
 
-" Shared Clipboard
-set clipboard=unnamed,unnamedplus
-
 " After setting exit vim, the content is displayed on the terminal screen and
 " can be used for viewing and copying
 " set t_ti= t_te=
@@ -168,7 +173,6 @@ let NERDTreeIgnore=['\.pyc$', '\~$']
 ":nnoremap <C-p> :Files<CR>
 let g:fzf_preview_window = ['up:40%:hidden', 'ctrl-/']
 let g:fzf_action = {
-      \ 'ctrl-t': 'tab split',
       \ 'ctrl-s': 'split',
       \ 'ctrl-v': 'vsplit'
       \ }
@@ -181,102 +185,6 @@ augroup fzf
   autocmd  FileType fzf set laststatus=0 noshowmode noruler
     \| autocmd BufLeave <buffer> set laststatus=2 showmode ruler
 augroup END
-
-" {{{
-  let g:fzf_nvim_statusline = 0 " disable statusline overwriting
-
-  nnoremap <silent> <leader><space> :Files<CR>
-  nnoremap <silent> <leader>a :Buffers<CR>
-  nnoremap <silent> <leader>A :Windows<CR>
-  nnoremap <silent> <leader>; :BLines<CR>
-  nnoremap <silent> <leader>o :BTags<CR>
-  nnoremap <silent> <leader>O :Tags<CR>
-  nnoremap <silent> <leader>? :History<CR>
-  nnoremap <silent> <leader>/ :execute 'Ag ' . input('Ag/')<CR>
-  nnoremap <silent> <leader>. :AgIn
-
-  nnoremap <silent> K :call SearchWordWithAg()<CR>
-  vnoremap <silent> K :call SearchVisualSelectionWithAg()<CR>
-  nnoremap <silent> <leader>gl :Commits<CR>
-  nnoremap <silent> <leader>ga :BCommits<CR>
-  nnoremap <silent> <leader>ft :Filetypes<CR>
-
-  imap <C-x><C-f> <plug>(fzf-complete-file-ag)
-  imap <C-x><C-l> <plug>(fzf-complete-line)
-
-  function! SearchWordWithAg()
-    execute 'Ag' expand('<cword>')
-  endfunction
-
-  function! SearchVisualSelectionWithAg() range
-    let old_reg = getreg('"')
-    let old_regtype = getregtype('"')
-    let old_clipboard = &clipboard
-    set clipboard&
-    normal! ""gvy
-    let selection = getreg('"')
-    call setreg('"', old_reg, old_regtype)
-    let &clipboard = old_clipboard
-    execute 'Ag' selection
-  endfunction
-
-  function! SearchWithAgInDirectory(...)
-    call fzf#vim#ag(join(a:000[1:], ' '), extend({'dir': a:1}, g:fzf#vim#default_layout))
-  endfunction
-  command! -nargs=+ -complete=dir AgIn call SearchWithAgInDirectory(<f-args>)
-" }}}
-
-
-" {{{
-  " Fix broken syntax highlight in gitcommit files
-  " (https://github.com/tpope/vim-git/issues/12)
-  let g:fugitive_git_executable = 'LANG=en_US.UTF-8 git'
-
-  nnoremap <silent> <leader>gs :Gstatus<CR>
-  nnoremap <silent> <leader>gd :Gdiff<CR>
-  nnoremap <silent> <leader>gc :Gcommit<CR>
-  nnoremap <silent> <leader>gb :Gblame<CR>
-  nnoremap <silent> <leader>ge :Gedit<CR>
-  nnoremap <silent> <leader>gE :Gedit<space>
-  nnoremap <silent> <leader>gr :Gread<CR>
-  nnoremap <silent> <leader>gR :Gread<space>
-  nnoremap <silent> <leader>gw :Gwrite<CR>
-  nnoremap <silent> <leader>gW :Gwrite!<CR>
-  nnoremap <silent> <leader>gq :Gwq<CR>
-  nnoremap <silent> <leader>gQ :Gwq!<CR>
-
-  function! ReviewLastCommit()
-    if exists('b:git_dir')
-      Gtabedit HEAD^{}
-      nnoremap <buffer> <silent> q :<C-U>bdelete<CR>
-    else
-      echo 'No git a git repository:' expand('%:p')
-    endif
-  endfunction
-  nnoremap <silent> <leader>g` :call ReviewLastCommit()<CR>
-
-  augroup fugitiveSettings
-    autocmd!
-    autocmd FileType gitcommit setlocal nolist
-    autocmd BufReadPost fugitive://* setlocal bufhidden=delete
-  augroup END
-" }}}
-
-Plug 'airblade/vim-gitgutter'
-" {{{
-  let g:gitgutter_map_keys = 0
-  let g:gitgutter_max_signs = 200
-  let g:gitgutter_realtime = 1
-  let g:gitgutter_eager = 1
-  let g:gitgutter_sign_removed = '–'
-  let g:gitgutter_diff_args = '--ignore-space-at-eol'
-  nmap <silent> ]h :GitGutterNextHunk<CR>
-  nmap <silent> [h :GitGutterPrevHunk<CR>
-  nnoremap <silent> <Leader>gu :GitGutterRevertHunk<CR>
-  nnoremap <silent> <Leader>gp :GitGutterPreviewHunk<CR><c-w>j
-  nnoremap cog :GitGutterToggle<CR>
-  nnoremap <Leader>gt :GitGutterAll<CR>
-" }}}
 
 
 " jedi
@@ -311,7 +219,7 @@ if has("autocmd")
   " autocmd BufRead *.txt set tw=78
   " When editing a file, always jump to the last cursor position
   autocmd BufReadPost *
-  \ if line("'\"") > -1 && line ("'\"") <= line("$") |
+  \ if line("'\"") > 0 && line ("'\"") <= line("$") |
   \   exe "normal! g'\"" |
   \ endif
   " don't write swapfile on most commonly used directories for NFS mounts or USB sticks
