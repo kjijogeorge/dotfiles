@@ -4,6 +4,7 @@
 HISTSIZE=20000
 HISTFILESIZE=20000
 export XDG_DATA_HOME=${XDG_DATA_HOME:="$HOME/.local/share"}
+export MYVIMRC='~/.vim/.vimrc'
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then

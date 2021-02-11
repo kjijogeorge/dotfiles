@@ -1,5 +1,6 @@
 set nocompatible
-let g:mapleader = "\<Space>"
+"let g:mapleader = "\<Space>"
+let g:mapleader = ","
 
 if empty(glob('~/.vim/autoload/plug.vim'))
    silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
@@ -15,12 +16,13 @@ call plug#begin('~/.vim/plugged')
   "Plug 'SirVer/ultisnips'
   "Plug 'honza/vim-snippets'
 
-  Plug 'scrooloose/nerdtree'
+  Plug 'preservim/nerdtree'
+        "\   | Plug 'Xuyuanp/nerdtree-git-plugin'
+        "\   | Plug 'ryanoasis/vim-devicons'
   Plug 'preservim/nerdcommenter'
   Plug 'bling/vim-airline'
   "Plug 'kien/ctrlp.vim'
   Plug 'flazz/vim-colorschemes'
-  "Plug 'dense-analysis/ale' " requires vim8
 
   set rtp+=/home/georgek/.vim/fzf
   Plug 'junegunn/fzf', { 'dir': '~/.vim/fzf', 'do': './install -all' }
@@ -32,8 +34,16 @@ call plug#begin('~/.vim/plugged')
   Plug 'Chiel92/vim-autoformat'
   Plug 'airblade/vim-gitgutter'
 
+  if has ('nvim')
+  	" requires vim8
+	Plug 'dense-analysis/ale'
+    Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+    set listchars+=space:˙
+  endif
+
 call plug#end()
-filetype plugin indent on    " required
+" required
+filetype plugin indent on
 
 """"""""""""""""""""BASE CONFIG"""""""""""""""""""""""
 "Status bar configuration
@@ -63,7 +73,7 @@ set ignorecase
 " One or more uppercase letters are still case sensitive
 set smartcase
 
-" set guifont=Menlo:h14
+"set guifont=Menlo:h14
 
 " colorscheme Tomorrow-Night-Bright
 " Use comes with color
@@ -98,12 +108,8 @@ set relativenumber
 " Backspace available
 set backspace=2
 
-" Backspace once deleted 4 spaces
-set smarttab
-
 " Indent
-set autoindent
-set smartindent
+set autoindent smartindent copyindent preserveindent
 
 " Save the file automatically delete the end of the line space or Tab
 autocmd BufWritePre * :%s/\s\+$//e
@@ -116,14 +122,95 @@ set fdm=indent
 " Expand by default
 set foldlevel=99
 " Add column for viewing fold information
-set foldcolumn=2
+" set foldcolumn=2
 
 " Highlight the current row, column
 set cursorline
-" set cursorcolumn
+"set cursorcolumn
+
+" Highlight lines over 80
+"set colorcolumn=80 " highlight column
+"au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
+"nnoremap <F6> :let &colorcolumn = join(range(81,199), ',')
+let s:OverLengthToggleVariable=0
+function! ToggleOverLength()
+    hi ColorColumn ctermbg=0 guibg=lightgrey
+    hi OverLength ctermbg=0 ctermfg=red guibg=lightgrey
+    if s:OverLengthToggleVariable == 0
+        match OverLength /\%81v.\+/
+        set colorcolumn=80
+      let s:OverLengthToggleVariable=1
+    else
+      match OverLength //
+      set colorcolumn=
+      let s:OverLengthToggleVariable=0
+    endif
+endfunction
+nnoremap <F6> :call ToggleOverLength()<cr>
+call ToggleOverLength()
+" hi CursorLine term=bold cterm=bold guibg=Grey40<Paste>
+
+" replace <Tab with spaces
+set expandtab
+" number of spaces that a <Tab> in the file counts for
+set tabstop=4
+" remove <Tab> symbols as it was spaces
+set softtabstop=4
+" indent size for << and >>
+set shiftwidth=2
+" round indent to multiple of 'shiftwidth' (for << and >>)
+set shiftround
+" Backspace once deleted 4 spaces
+set smarttab
 
 " Shared Clipboard
-set clipboard=unnamed,unnamedplus
+set clipboard+=unnamedplus
+
+" Set listchars and toogle using
+"set listchars=tab:•,extends:→,precedes:←,Nbsp:·,trail:·,eol:§
+if has('gui_running')
+  set listchars+=tab:▶‒,nbsp:∙,trail:∙,extends:▶,precedes:◀
+  let &showbreak = '↳'
+else
+  set listchars+=tab:→\ ,trail:·,eol:¬,extends:…,precedes:…
+  let &showbreak = '^'
+endif
+highlight NonText guifg=#4a4a59
+highlight SpecialKey guifg=white guibg=#cc0000
+noremap <F5> :set list!<CR>
+inoremap <F5> <C-o>:set list!<CR>
+cnoremap <F5> <C-c>:set list!<CR>
+
+" Format json on save
+nnoremap <leader>fj ggVG!python -m json.tool<CR> :set syntax=json<CR>
+
+" insert date as header for Markdown files
+nnoremap <leader>id GGo<Esc>:r !date<CR>ko##<Del> <Esc>o
+
+" Insert python breakboint using abbreviation and leader+p
+ab pdb import pdb; pdb.set_trace()
+
+map <Leader>p :call InsertLine()<CR>
+function! InsertLine()
+  let trace = expand("import pdb; pdb.set_trace()")
+  execute "normal o".trace
+endfunction
+"nnoremap <leader>p oimport pdb; pdb.set_trace()<Esc>
+
+" " Copy to clipboard
+vnoremap <leader>y  "+y
+nnoremap <leader>Y  "+yg_
+nnoremap <leader>y  "+y
+nnoremap <leader>yy  "+yy
+
+" " Paste from clipboard
+nnoremap <leader>p "+p
+nnoremap <leader>P "+P
+vnoremap <leader>p "+p
+vnoremap <leader>P "+P
+
+" Save a backup file as backup
+map <leader>bak :up \| saveas! %:p:r-<C-R>=strftime("%y%m%d-%H%M")<CR>-bak.<C-R>=expand("%:e")<CR> \| 3sleep \| e #<CR>
 
 " After setting exit vim, the content is displayed on the terminal screen and
 " can be used for viewing and copying
@@ -141,24 +228,43 @@ autocmd BufReadPost *
 cnoremap w!! execute 'silent! write !sudo tee % > /dev/null' <bar> edit!
 
 "mapping C-w to C-e because of terminator conflict
-:nnoremap <C-e> <C-w>
+nnoremap <C-e> <C-w>
 
 "set colorscheme for 256
-:set t_Co=256
+set t_Co=256
 
 " Persistent folds between vim sessions
 augroup AutoSaveFolds
   autocmd!
-  autocmd BufWinLeave Work_status.org mkview
-  autocmd BufWinEnter Work_status.org silent loadview
+  autocmd BufWinLeave Work_status.md mkview
+  autocmd BufWinEnter Work_status.md silent loadview
 augroup END
-""""""""""""""""""""""""""""""PLUGIN CONFIG""""""""""""""""""""""""""
+
+
+"""""""""""""""""""""""""""""PLUGIN CONFIG""""""""""""""""""""""""""
 " NERDTREE
 map <F2> :NERDTreeToggle<CR>
 let NERDTreeIgnore=['\.pyc$', '\~$']
-" show nerdtree when starts up
-" autocmd vimenter * NERDTree
- autocmd bufenter * if (winnr("$") == 1 && exists('b:NERDTreeType') && b:NERDTreeType == 'primary') | q | endif
+"let g:NERDTreeDirArrows = 1
+"let g:NERDTreeDirArrowExpandable = '▸'
+"let g:NERDTreeDirArrowCollapsible = '▾'
+"show nerdtree when starts up
+"autocmd vimenter * NERDTree
+autocmd bufenter * if (winnr("$") == 1 && exists('b:NERDTreeType') && b:NERDTreeType == 'primary') | q | endif
+
+let g:NERDTreeGitStatusUseNerdFonts = 1
+let g:NERDTreeGitStatusIndicatorMapCustom = {
+                \ 'Modified'  :'✹',
+                \ 'Staged'    :'✚',
+                \ 'Untracked' :'✭',
+                \ 'Renamed'   :'➜',
+                \ 'Unmerged'  :'═',
+                \ 'Deleted'   :'✖',
+                \ 'Dirty'     :'✗',
+                \ 'Ignored'   :'☒',
+                \ 'Clean'     :'✔︎',
+                \ 'Unknown'   :'?',
+                \ }
 
 " CtrlP
 "let g:ctrlp_show_hidden = 1
@@ -183,15 +289,16 @@ augroup fzf
 augroup END
 
 " {{{
-  let g:fzf_nvim_statusline = 0 " disable statusline overwriting
+  " disable statusline overwriting
+  let g:fzf_nvim_statusline = 0
 
-  nnoremap <silent> <leader><space> :Files<CR>
-  nnoremap <silent> <leader>a :Buffers<CR>
-  nnoremap <silent> <leader>A :Windows<CR>
+  nnoremap <silent> <leader>, :Files<CR>
+  nnoremap <silent> <leader>b :Buffers<CR>
+  nnoremap <silent> <leader>W :Windows<CR>
   nnoremap <silent> <leader>; :BLines<CR>
-  nnoremap <silent> <leader>o :BTags<CR>
-  nnoremap <silent> <leader>O :Tags<CR>
-  nnoremap <silent> <leader>? :History<CR>
+  nnoremap <silent> <leader>t :BTags<CR>
+  nnoremap <silent> <leader>T :Tags<CR>
+  nnoremap <silent> <leader>H :History<CR>
   nnoremap <silent> <leader>/ :execute 'Ag ' . input('Ag/')<CR>
   nnoremap <silent> <leader>. :AgIn
 
@@ -294,14 +401,23 @@ if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
    set fileencodings=ucs-bom,utf-8,latin1
 endif
 
-"set nocompatible	" Use Vim defaults (much better!)
-set bs=indent,eol,start		" allow backspacing over everything in insert mode
-"set ai			" always set autoindenting on
-"set backup		" keep a backup file
+" allow backspacing over everything in insert mode
+set bs=indent,eol,start
+
+" always set autoindenting on
+set ai
+
+" keep a backup file
+"set backup
+
 set viminfo='20,\"50	" read/write a .viminfo file, don't store more
 			" than 50 lines of registers
-set history=50		" keep 50 lines of command line history
-set ruler		" show the cursor position all the time
+
+" keep 50 lines of command line history
+set history=50
+
+" show the cursor position all the time
+set ruler
 
 " Only do this part when compiled with support for autocommands
 if has("autocmd")
@@ -355,9 +471,9 @@ endif
 " http://www.linuxpowertop.org/known.php
 let &guicursor = &guicursor . ",a:blinkon0"
 
-"----------------------------------------------------------------------------------------------
+"------------------------------------------------------------------------------
 " More setting for syntastic
-"----------------------------------------------------------------------------------------------
+"------------------------------------------------------------------------------
 "set statusline+=%#warningmsg#
 "set statusline+=%{SyntasticStatuslineFlag()}
 "set statusline+=%*
@@ -380,9 +496,9 @@ let &guicursor = &guicursor . ",a:blinkon0"
 " " All messages and errors will be ignored.
 "silent! helptags ALL
 
-"----------------------------------------------------------------------------------------------
+"------------------------------------------------------------------------------
 " ALE Settings
-"----------------------------------------------------------------------------------------------
+"------------------------------------------------------------------------------
 "let g:ale_linters = {
       "\   'python': ['flake8', 'pylint'],
       "\   'ruby': ['standardrb', 'rubocop'],
@@ -416,7 +532,7 @@ let &guicursor = &guicursor . ",a:blinkon0"
 "set statusline+=\ %{LinterStatus()}
 
 " Autoformat Settings
-"----------------------------------------------------------------------------------------------
+"------------------------------------------------------------------------------
 " set :Autoformat command to <F3>
 noremap <F3> :Autoformat<CR>
 
