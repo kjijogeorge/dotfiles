@@ -9,38 +9,36 @@ if empty(glob('~/.vim/autoload/plug.vim'))
 endif
 
 call plug#begin('~/.vim/plugged')
-
-  "Plug 'Valloric/YouCompleteMe'
-
-  "Plug 'davidhalter/jedi-vim'
   "Plug 'SirVer/ultisnips'
   "Plug 'honza/vim-snippets'
-
-  Plug 'preservim/nerdtree'
-        "\   | Plug 'Xuyuanp/nerdtree-git-plugin'
-        "\   | Plug 'ryanoasis/vim-devicons'
-  Plug 'preservim/nerdcommenter'
-  Plug 'bling/vim-airline'
   "Plug 'kien/ctrlp.vim'
+  "Plug 'python-mode/python-mode', { 'for': 'python', 'branch': 'develop' }
+  "Plug 'vim-syntastic/syntastic'
+  "Plug 'Chiel92/vim-autoformat'
+  Plug 'Vimjas/vim-python-pep8-indent'
+  Plug 'airblade/vim-gitgutter'
+  Plug 'bling/vim-airline'
+  Plug 'davidhalter/jedi-vim'
   Plug 'flazz/vim-colorschemes'
-
-  set rtp+=/home/georgek/.vim/fzf
   Plug 'junegunn/fzf', { 'dir': '~/.vim/fzf', 'do': './install -all' }
   Plug 'junegunn/fzf.vim'
-
+  Plug 'preservim/nerdcommenter'
+  Plug 'preservim/nerdtree'
   Plug 'tpope/vim-fugitive'
-  Plug 'Vimjas/vim-python-pep8-indent'
-  "Plug 'vim-syntastic/syntastic'
-  Plug 'Chiel92/vim-autoformat'
-  Plug 'airblade/vim-gitgutter'
-
   if has ('nvim')
   	" requires vim8
+    Plug 'Xuyuanp/nerdtree-git-plugin'
 	Plug 'dense-analysis/ale'
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+    Plug 'voldikss/vim-floaterm'
+    Plug 'mg979/vim-visual-multi', {'branch': 'master'}
+    Plug 'Valloric/YouCompleteMe'
+    "Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
+    "Plug 'neoclide/coc.nvim', {'branch': 'release'}
     set listchars+=space:˙
   endif
 
+set rtp+=/home/georgek/.vim/fzf
 call plug#end()
 " required
 filetype plugin indent on
@@ -84,7 +82,7 @@ set smartcase
 set showcmd
 
 " autocomplete is getting much better :e <tab>...
-set wildchar=<Tab> wildmenu wildmode=full
+set wildchar=<Tab> wildmenu wildmode=longest,list,full
 set wildignore=*.o,*.obj,*.bak,*.exe,*.swp,*.pyc
 
 " redraw only when we need to.
@@ -188,14 +186,14 @@ nnoremap <leader>fj ggVG!python -m json.tool<CR> :set syntax=json<CR>
 nnoremap <leader>id GGo<Esc>:r !date<CR>ko##<Del> <Esc>o
 
 " Insert python breakboint using abbreviation and leader+p
-ab pdb import pdb; pdb.set_trace()
+"ab pdb import pdb; pdb.set_trace()
 
-map <Leader>p :call InsertLine()<CR>
+map <Leader>ip :call InsertLine()<CR>
 function! InsertLine()
   let trace = expand("import pdb; pdb.set_trace()")
   execute "normal o".trace
 endfunction
-"nnoremap <leader>p oimport pdb; pdb.set_trace()<Esc>
+"nnoremap <leader>ip oimport pdb; pdb.set_trace()<Esc>
 
 " " Copy to clipboard
 vnoremap <leader>y  "+y
@@ -211,6 +209,25 @@ vnoremap <leader>P "+P
 
 " Save a backup file as backup
 map <leader>bak :up \| saveas! %:p:r-<C-R>=strftime("%y%m%d-%H%M")<CR>-bak.<C-R>=expand("%:e")<CR> \| 3sleep \| e #<CR>
+
+" Custom indentation for python
+au BufNewFile,BufRead *.py
+    \ set expandtab
+    \| set autoindent
+    \| set tabstop=4
+    \| set softtabstop=4
+    \| set shiftwidth=4
+    \| set foldmethod=indent
+
+command Diffthis execute 'w !git diff --no-index % -'
+
+nmap <c-s> :w<CR>
+vmap <c-s> <Esc><c-s>gv
+imap <c-s> <Esc><c-s>
+
+nmap <F7> :update<CR>
+vmap <F7> <Esc><F7>gv
+imap <F7> <c-o><F7>
 
 " After setting exit vim, the content is displayed on the terminal screen and
 " can be used for viewing and copying
@@ -308,8 +325,8 @@ augroup END
   nnoremap <silent> <leader>ga :BCommits<CR>
   nnoremap <silent> <leader>ft :Filetypes<CR>
 
-  imap <C-x><C-f> <plug>(fzf-complete-file-ag)
-  imap <C-x><C-l> <plug>(fzf-complete-line)
+  "imap <C-x><C-f> <plug>(fzf-complete-file-ag)
+  "imap <C-x><C-l> <plug>(fzf-complete-line)
 
   function! SearchWordWithAg()
     execute 'Ag' expand('<cword>')
@@ -388,7 +405,7 @@ Plug 'airblade/vim-gitgutter'
 
 " jedi
 autocmd FileType python setlocal completeopt-=preview
-let g:jedi#completions_command = "<C-n>"
+"let g:jedi#completions_command = "<C-Tab>"
 
 " ultisnips
 "let g:UltiSnipsExpandTrigger="<tab>"
@@ -499,15 +516,16 @@ let &guicursor = &guicursor . ",a:blinkon0"
 "------------------------------------------------------------------------------
 " ALE Settings
 "------------------------------------------------------------------------------
-"let g:ale_linters = {
-      "\   'python': ['flake8', 'pylint'],
-      "\   'ruby': ['standardrb', 'rubocop'],
-      "\   'javascript': ['eslint'],
-      "\}
-"let g:ale_fixers = {
-      "\    'python': ['autopep8', 'yapf'],
-      "\}
-"nmap <F10> :ALEFix<CR>
+let g:ale_linters = {
+      \   'python': ['flake8', 'pylint'],
+      \   'ruby': ['standardrb', 'rubocop'],
+      \   'javascript': ['eslint'],
+      \}
+let g:ale_fixers = {
+      \    'python': ['autopep8', 'yapf'],
+      \}
+nmap <F10> :ALEFix<CR>
+let b:ale_fixers = ['prettier', 'eslint']
 "let g:ale_fix_on_save = 1
 
 "let g:airline#extensions#ale#enabled = 1
@@ -534,7 +552,7 @@ let &guicursor = &guicursor . ",a:blinkon0"
 " Autoformat Settings
 "------------------------------------------------------------------------------
 " set :Autoformat command to <F3>
-noremap <F3> :Autoformat<CR>
+" noremap <F3> :Autoformat<CR>
 
 "au BufWrite * :Autoformat
 
