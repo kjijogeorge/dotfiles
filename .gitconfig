@@ -1,26 +1,38 @@
 [alias]
-    a = add
-    aa = add -A
-    b = branch
-    ba = branch -a
-    c = commit -m
-    ca = commit -am
-    co = checkout
-    contributors = shortlog -nse
-    d = diff --patch-with-stat
-    df = diff --patch-with-stat --color-words
-    ds = diff --patch-with-stat --staged
-    dt = difftool
-    dts = difftool --staged
+    aliases = "!git config -l | grep alias | cut -c 7-"
+    amend= "!git commit --amend --no-edit"
+    ;amed= "!git add -A && git commit --amend --no-edit"
+    b    = "!git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'"
+    bd   = branch -D
+    c    = "!git commit -m "
+    cv   = "!git commit -v "
+    ;c   = "!git add -A && git commit -m "
+    ch   = checkout
+    chb  = checkout -b
+    chm  = checkout master
+    done = "!git push origin HEAD"
+    d    = diff --patch-with-stat
+    dc   = diff --patch-with-stat --cached
+    df   = diff --patch-with-stat --color-words
+    ds   = diff --patch-with-stat --staged
+    dt   = difftool
+    dts  = difftool --staged
     fc = "!f() { git log --pretty='%C(yellow)%h%Creset -%Cred%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset' --grep=$1; }; f"
     fs = "!f() { git log --pretty='%C(yellow)%h%Creset -%Cred%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset' -S$1; }; f"
-    lg = log --graph --pretty='%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset'
-    pull-dir = "!find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \\;"
-    remotes = remote -v
-    s = status -sb
-    sclone = clone --depth 1
-    undo = reset HEAD~1
-
+    l    = log --graph --all --pretty=format:'%C(yellow)%h%C(cyan)%d%Creset %s %C(white)- %an, %ar%Creset'
+    last = log -1 HEAD --stat
+    ld   = log --pretty=format:"%h %ad %s" --date=short --all
+    ;lg  = log --color --graph --pretty=format:'%C(bold white)%h%Creset -%C(bold green)%d%Creset %s %C(bold green)(%cr)%Creset %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+    lg   = log --all --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    ll   = log --stat --abbrev-commit
+    llg  = log --color --graph --pretty=format:'%C(bold white)%H %d%Creset%n%s%n%+b%C(bold blue)%an <%ae>%Creset %C(bold green)%cr (%ci)' --abbrev-commit
+    pom  = pull origin master
+    res  = "!git reset --hard"
+    s    = status
+    sb   = status -sb
+    unstage = reset HEAD --
+    undo = reset HEAD~1 --mixed
+    
 [core]
     editor = vim
     autocrlf = false
