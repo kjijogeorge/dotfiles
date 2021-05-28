@@ -26,13 +26,18 @@ call plug#begin('~/.vim/plugged')
   Plug 'preservim/nerdtree'
   Plug 'tpope/vim-fugitive'
   if has ('nvim')|| v:version >= 800
-  	" requires vim8
+  	" requires vim8 or nvim
     Plug 'Xuyuanp/nerdtree-git-plugin'
+    Plug 'junegunn/goyo.vim'
+    Plug 'tpope/vim-surround'
+    Plug 'tpope/vim-repeat'
+    Plug 'junegunn/limelight.vim'
+    Plug 'plasticboy/vim-markdown'
 	Plug 'dense-analysis/ale'
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
     Plug 'voldikss/vim-floaterm'
     Plug 'mg979/vim-visual-multi', {'branch': 'master'}
-    Plug 'Valloric/YouCompleteMe'
+    "Plug 'Valloric/YouCompleteMe'
     "Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
     "Plug 'neoclide/coc.nvim', {'branch': 'release'}
     set listchars+=space:˙
@@ -83,7 +88,7 @@ set showcmd
 
 " autocomplete is getting much better :e <tab>...
 set wildchar=<Tab> wildmenu wildmode=longest,list,full
-set wildignore=*.o,*.obj,*.bak,*.exe,*.swp,*.pyc
+set wildignore=*.o,*.obj,*.exe,*.swp,*.pyc,__pycache__
 
 " redraw only when we need to.
 set lazyredraw
@@ -162,7 +167,7 @@ set shiftround
 set smarttab
 
 " Shared Clipboard
-set clipboard=unnamedplus
+set clipboard+=unnamedplus
 
 " Set listchars and toogle using
 "set listchars=tab:•,extends:→,precedes:←,Nbsp:·,trail:·,eol:§
@@ -219,15 +224,7 @@ au BufNewFile,BufRead *.py
     \| set shiftwidth=4
     \| set foldmethod=indent
 
-command Diffthis execute 'w !git diff --no-index % -'
-
-nmap <c-s> :w<CR>
-vmap <c-s> <Esc><c-s>gv
-imap <c-s> <Esc><c-s>
-
-nmap <F7> :update<CR>
-vmap <F7> <Esc><F7>gv
-imap <F7> <c-o><F7>
+command! GitDiff execute 'w !git diff --no-index % -'
 
 " After setting exit vim, the content is displayed on the terminal screen and
 " can be used for viewing and copying
@@ -257,22 +254,124 @@ augroup AutoSaveFolds
   autocmd BufWinEnter Work_status.md silent loadview
 augroup END
 
-if &diff
-    colorscheme evening
+" Search word and list quickfix window
+nnoremap <F4> :grep! "\<<cword>\>" . -r<CR>:copen<CR>
+
+" Execute the line under the cursor in ex
+nnoremap <Leader>e :execute getline(".")<CR>
+
+" Select All from Insert mode using <Ctrl-A> (overrides default "Insert previously inserted text").  Finishes in Visual mode.
+inoremap <C-a> <Esc>ggvG$
+" Same when in Visual mode:
+vnoremap <C-a> <Esc>ggvG$
+
+" Write using different commands
+nmap <c-s> :w<CR>
+vmap <c-s> <Esc><c-s>gv
+imap <c-s> <Esc><c-s>
+
+nmap <F7> :update<CR>
+vmap <F7> <Esc><F7>gv
+imap <F7> <c-o><F7>
+
+"nnoremap Z :w<Enter>
+nnoremap Q :q!<Enter>
+
+" Better diff
+if has('nvim-0.3.2') || has("patch-8.1.0360")
+    set diffopt=filler,internal,algorithm:histogram,indent-heuristic
 endif
+
+"--------------------------------------------
+" Default settings from before copying the personal vimrc
+if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
+   set fileencodings=ucs-bom,utf-8,latin1
+endif
+
+" allow backspacing over everything in insert mode
+set bs=indent,eol,start
+
+" always set autoindenting on
+set ai
+
+" keep a backup file
+"set backup
+
+set viminfo='20,\"50	" read/write a .viminfo file, don't store more
+			" than 50 lines of registers
+
+" keep 50 lines of command line history
+set history=50
+
+" show the cursor position all the time
+set ruler
+
+" Only do this part when compiled with support for autocommands
+if has("autocmd")
+  augroup redhat
+  " autocmd!
+  " In text files, always limit the width of text to 78 characters
+  " autocmd BufRead *.txt set tw=78
+  " When editing a file, always jump to the last cursor position
+  autocmd BufReadPost *
+  \ if line("'\"") > -1 && line ("'\"") <= line("$") |
+  \   exe "normal! g'\"" |
+  \ endif
+  " don't write swapfile on most commonly used directories for NFS mounts or USB sticks
+  autocmd BufNewFile,BufReadPre /media/*,/run/media/*,/mnt/* set directory=~/tmp,/var/tmp,/tmp
+  " start with spec file template
+  autocmd BufNewFile *.spec 0r /usr/share/vim/vimfiles/template.spec
+  augroup END
+endif
+
+if has("cscope") && filereadable("/usr/bin/cscope")
+   set csprg=/usr/bin/cscope
+   set csto=0
+   set cst
+   set nocsverb
+   " add any database in current directory
+   if filereadable("cscope.out")
+      cs add $PWD/cscope.out
+   " else add database pointed to by environment
+   elseif $CSCOPE_DB != ""
+      cs add $CSCOPE_DB
+   endif
+   set csverb
+endif
+
+" Switch syntax highlighting on, when the terminal has colors
+" Also switch on highlighting the last used search pattern.
+"if &t_Co > 2 || has("gui_running")
+  "syntax on
+  "set hlsearch
+"endif
+
+"filetype plugin on
+
+if &term=="xterm"
+     set t_Co=8
+     set t_Sb=[4%dm
+     set t_Sf=[3%dm
+endif
+
+" Don't wake up system with blinking cursor:
+" http://www.linuxpowertop.org/known.php
+let &guicursor = &guicursor . ",a:blinkon0"
 
 
 """""""""""""""""""""""""""""PLUGIN CONFIG""""""""""""""""""""""""""
 " NERDTREE
 map <F2> :NERDTreeToggle<CR>
 let NERDTreeIgnore=['\.pyc$', '\~$']
+let NERDTreeQuitOnOpen = 1
+let NERDTreeMinimalUI = 1
+let NERDTreeDirArrows = 1
 "let g:NERDTreeDirArrows = 1
 "let g:NERDTreeDirArrowExpandable = '▸'
 "let g:NERDTreeDirArrowCollapsible = '▾'
 "show nerdtree when starts up
+"autocmd vimenter * NERDTree
 autocmd bufenter * if (winnr("$") == 1 && exists('b:NERDTreeType') && b:NERDTreeType == 'primary') | q | endif
-autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 let g:NERDTreeGitStatusUseNerdFonts = 1
 let g:NERDTreeGitStatusIndicatorMapCustom = {
@@ -356,6 +455,7 @@ augroup END
 " }}}
 
 
+"------------------------- Plug 'tpope/vim-fugitive' ----------------------
 " {{{
   " Fix broken syntax highlight in gitcommit files
   " (https://github.com/tpope/vim-git/issues/12)
@@ -391,7 +491,8 @@ augroup END
   augroup END
 " }}}
 
-Plug 'airblade/vim-gitgutter'
+
+"---------------------- Plug 'airblade/vim-gitgutter' -------------------
 " {{{
   let g:gitgutter_map_keys = 0
   let g:gitgutter_max_signs = 200
@@ -408,94 +509,56 @@ Plug 'airblade/vim-gitgutter'
 " }}}
 
 
-" jedi
+"--------------------- Plug 'tpope/vim-fugitive'------------------------------
 autocmd FileType python setlocal completeopt-=preview
 "let g:jedi#completions_command = "<C-Tab>"
+let g:jedi#auto_initialization = 1
+let g:jedi#completions_enabled = 0
+let g:jedi#auto_vim_configuration = 0
+let g:jedi#smart_auto_mappings = 0
+let g:jedi#popup_on_dot = 0
+let g:jedi#completions_command = ""
+let g:jedi#show_call_signatures = "1"
 
-" ultisnips
-"let g:UltiSnipsExpandTrigger="<tab>"
-"let g:UltiSnipsJumpForwardTrigger="<tab>"
-"let g:UltiSnipsJumpBackwardTrigger="<s-tab>"
 
-"--------------------------------------------
-" Default settings from before copying the personal vimrc
-if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
-   set fileencodings=ucs-bom,utf-8,latin1
-endif
+"--------- Plug 'junegunn/goyo' and 'Plug 'junegunn/limelight.vim''------------
+" {{{
+autocmd FileType python setlocal completeopt-=preview
+" Color name (:help cterm-colors) or ANSI code
+let g:limelight_conceal_ctermfg = 'gray'
+let g:limelight_conceal_ctermfg = 240
 
-" allow backspacing over everything in insert mode
-set bs=indent,eol,start
+" Color name (:help gui-colors) or RGB color
+let g:limelight_conceal_guifg = 'DarkGray'
+let g:limelight_conceal_guifg = '#777777'
 
-" always set autoindenting on
-set ai
+" Default= 0.5
+let g:limelight_default_coefficient = 0.7
 
-" keep a backup file
-"set backup
+" Number of preceding/following paragraphs to include (default: 0)
+let g:limelight_paragraph_span = 1
 
-set viminfo='20,\"50	" read/write a .viminfo file, don't store more
-			" than 50 lines of registers
+" Beginning/end of paragraph
+"   When there's no empty line between the paragraphs
+"   and each paragraph starts with indentation
+let g:limelight_bop = '^\s'
+let g:limelight_eop = '\ze\n^\s'
 
-" keep 50 lines of command line history
-set history=50
+" Highlighting priority (default: 10)
+"   Set it to -1 not to overrule hlsearch
+let g:limelight_priority = -1
 
-" show the cursor position all the time
-set ruler
+autocmd! User GoyoEnter Limelight
+autocmd! User GoyoLeave Limelight!
 
-" Only do this part when compiled with support for autocommands
-if has("autocmd")
-  augroup redhat
-  " autocmd!
-  " In text files, always limit the width of text to 78 characters
-  " autocmd BufRead *.txt set tw=78
-  " When editing a file, always jump to the last cursor position
-  autocmd BufReadPost *
-  \ if line("'\"") > -1 && line ("'\"") <= line("$") |
-  \   exe "normal! g'\"" |
-  \ endif
-  " don't write swapfile on most commonly used directories for NFS mounts or USB sticks
-  autocmd BufNewFile,BufReadPre /media/*,/run/media/*,/mnt/* set directory=~/tmp,/var/tmp,/tmp
-  " start with spec file template
-  autocmd BufNewFile *.spec 0r /usr/share/vim/vimfiles/template.spec
-  augroup END
-endif
+nnoremap <Leader>gy :Goyo<CR>
+"let g:limelight_bop = '^\s*$'
+"let g:limelight_eop = '^\s*$'
+" }}}
 
-if has("cscope") && filereadable("/usr/bin/cscope")
-   set csprg=/usr/bin/cscope
-   set csto=0
-   set cst
-   set nocsverb
-   " add any database in current directory
-   if filereadable("cscope.out")
-      cs add $PWD/cscope.out
-   " else add database pointed to by environment
-   elseif $CSCOPE_DB != ""
-      cs add $CSCOPE_DB
-   endif
-   set csverb
-endif
 
-" Switch syntax highlighting on, when the terminal has colors
-" Also switch on highlighting the last used search pattern.
-if &t_Co > 2 || has("gui_running")
-  syntax on
-  set hlsearch
-endif
-
-filetype plugin on
-
-if &term=="xterm"
-     set t_Co=8
-     set t_Sb=[4%dm
-     set t_Sf=[3%dm
-endif
-
-" Don't wake up system with blinking cursor:
-" http://www.linuxpowertop.org/known.php
-let &guicursor = &guicursor . ",a:blinkon0"
-
-"------------------------------------------------------------------------------
-" More setting for syntastic
-"------------------------------------------------------------------------------
+"------------------------ Syntastic ------------------------------------
+" {{{
 "set statusline+=%#warningmsg#
 "set statusline+=%{SyntasticStatuslineFlag()}
 "set statusline+=%*
@@ -514,9 +577,15 @@ let &guicursor = &guicursor . ",a:blinkon0"
 
 "let g:syntastic_python_checkers = ['flak8', 'pylint']
 
-"------------------------------------------------------------------------------
-" ALE Settings
-"------------------------------------------------------------------------------
+" Load all plugins now.
+" " All messages and errors will be ignored.
+"silent! helptags ALL
+" }}}
+
+
+"-------------------------ALE Settings --------------------------------------
+" {{{
+let b:ale_fixers = ['prettier', 'eslint']
 let g:ale_linters = {
       \   'python': ['flake8', 'pylint'],
       \   'ruby': ['standardrb', 'rubocop'],
@@ -526,7 +595,6 @@ let g:ale_fixers = {
       \    'python': ['autopep8', 'yapf'],
       \}
 nmap <F10> :ALEFix<CR>
-let b:ale_fixers = ['prettier', 'eslint']
 "let g:ale_fix_on_save = 1
 
 "let g:airline#extensions#ale#enabled = 1
@@ -549,6 +617,8 @@ let b:ale_fixers = ['prettier', 'eslint']
 "set statusline+=\ %f
 "set statusline+=%=
 "set statusline+=\ %{LinterStatus()}
+" }}}
+"
 
 " Autoformat Settings
 "------------------------------------------------------------------------------
@@ -568,4 +638,3 @@ let b:ale_fixers = ['prettier', 'eslint']
 " let g:autoformat_autoindent = 0
 " let g:autoformat_retab = 0
 " let g:autoformat_remove_trailing_spaces = 0
-
